@@ -73,7 +73,7 @@ This project utilizes modern Python development practices. I chose **FastAPI** a
    ```
 
 ## Quick Usage Guide
- Go to [http://127.0.0.1:8000] local, Deployed - https://financemanagementsystem-rhhp.onrender.com/#
+ Go to [http://127.0.0.1:8000] local, Deployed - https://financemanagementsystem-rhhp.onrender.com/
 - Register a new user (e.g., `admin_user` with role `Admin`).
 - Login with the new user to receive a JWT token.
 - You can also use Admin, Admin for Quick testing.
