@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finance Tracker</title>
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f4f6f8; color: #333; }
+        .hidden { display: none !important; }
+        
+        /* Navbar */
+        .navbar { box-shadow: 0 2px 10px rgba(0,0,0,0.05); background-color: #ffffff; }
+        .navbar-brand { font-weight: 700; color: #2c3e50 !important; }
+        
+        /* Cards */
+        .card-custom { border: none; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,0.03); transition: transform 0.2s; background: #fff; }
+        .card-custom:hover { transform: translateY(-2px); }
+        
+        /* Dashboard Stats */
+        .stat-icon { font-size: 2rem; opacity: 0.8; }
+        .bg-gradient-success { background: linear-gradient(135deg, #2ecc71, #27ae60); color: white; }
+        .bg-gradient-danger { background: linear-gradient(135deg, #e74c3c, #c0392b); color: white; }
+        .bg-gradient-primary { background: linear-gradient(135deg, #3498db, #2980b9); color: white; }
+        
+        /* Auth Form */
+        .auth-container { display: flex; align-items: center; justify-content: center; min-height: 80vh; }
+        
+        /* Tables */
+        .table-custom th { font-weight: 600; color: #7f8c8d; border-bottom: 2px solid #ecf0f1; padding: 12px 16px; }
+        .table-custom td { vertical-align: middle; padding: 16px; color: #2c3e50; }
+        .badge-income { background-color: #e8f8f5; color: #27ae60; font-weight: 600; padding: 6px 12px; border-radius: 8px; }
+        .badge-expense { background-color: #fdedec; color: #c0392b; font-weight: 600; padding: 6px 12px; border-radius: 8px; }
+        
+        /* Forms */
+        .form-control, .form-select { border-radius: 8px; border: 1px solid #dfe6e9; padding: 10px 15px; }
+        .form-control:focus, .form-select:focus { border-color: #3498db; box-shadow: 0 0 0 0.2rem rgba(52, 152, 219, 0.15); }
+        .btn-custom { border-radius: 8px; font-weight: 600; padding: 10px 20px; }
+    </style>
+</head>
+<body>
+
+<!-- Navbar -->
+<nav class="navbar navbar-expand-lg navbar-light mb-4">
+    <div class="container">
+        <a class="navbar-brand" href="#"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Finance Tracker</a>
+        <div class="d-flex hidden" id="navAuthMenu">
+            <span class="navbar-text me-3 fw-bold" id="navUserDisplay"></span>
+            <button class="btn btn-outline-danger btn-sm rounded-pill px-3 fw-bold" onclick="logout()">
+                <i class="fa-solid fa-arrow-right-from-bracket me-1"></i>Logout
+            </button>
+        </div>
+    </div>
+</nav>
+
+<div class="container">
+    <!-- Toasts container for alerts -->
+    <div class="toast-container position-fixed bottom-0 end-0 p-3" style="z-index: 11" id="toastContainer"></div>
+
+    <!-- Auth Section -->
+    <div id="authSection" class="auth-container mt-n4">
+        <div class="col-md-5 col-lg-4">
+            <div class="card card-custom p-4 p-md-5">
+                <div class="text-center mb-4">
+                    <div class="bg-primary text-white rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 60px; height: 60px; font-size: 24px;">
+                        <i class="fa-solid fa-user-lock"></i>
+                    </div>
+                    <h4 class="fw-bold text-dark">Welcome Back</h4>
+                    <p class="text-muted small">Login or create an account to continue</p>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted fw-bold">Username</label>
+                    <input type="text" id="username" class="form-control" placeholder="Enter username">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label small text-muted fw-bold">Password</label>
+                    <input type="password" id="password" class="form-control" placeholder="Enter password">
+                </div>
+                <div class="mb-4">
+                    <label class="form-label small text-muted fw-bold">Role (Used for Registration only)</label>
+                    <select id="role" class="form-select">
+                        <option value="Admin">Admin (Full Access)</option>
+                        <option value="Analyst">Analyst (Edit/View)</option>
+                        <option value="Viewer">Viewer (Read-Only)</option>
+                    </select>
+                </div>
+                <button class="btn btn-primary btn-custom w-100 mb-2" onclick="login()">Sign In</button>
+                <button class="btn btn-light btn-custom w-100 text-primary border" onclick="register()">Create Account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard Section -->
+    <div id="dashboardSection" class="hidden pb-5">
+        
+        <!-- Summary Cards -->
+        <div class="row g-4 mb-4">
+            <div class="col-md-4">
+                <div class="card card-custom bg-gradient-success p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-white-50 fw-bold text-uppercase small">Total Income</p>
+                            <h2 class="mb-0 fw-bold" id="totIncome">$0.00</h2>
+                        </div>
+                        <i class="fa-solid fa-arrow-trend-up stat-icon text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-custom bg-gradient-danger p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-white-50 fw-bold text-uppercase small">Total Expenses</p>
+                            <h2 class="mb-0 fw-bold" id="totExpense">$0.00</h2>
+                        </div>
+                        <i class="fa-solid fa-arrow-trend-down stat-icon text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card card-custom bg-gradient-primary p-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <p class="mb-1 text-white-50 fw-bold text-uppercase small">Current Balance</p>
+                            <h2 class="mb-0 fw-bold" id="curBalance">$0.00</h2>
+                        </div>
+                        <i class="fa-solid fa-wallet stat-icon text-white-50"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="row g-4">
+            <!-- Add Transaction -->
+            <div class="col-lg-4">
+                <div class="card card-custom p-4 h-100">
+                    <h5 class="fw-bold mb-4"><i class="fa-solid fa-plus-circle text-primary me-2"></i>New Transaction</h5>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold">Type</label>
+                        <select id="txType" class="form-select">
+                            <option value="income">Income</option>
+                            <option value="expense">Expense</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold">Amount</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-end-0">$</span>
+                            <input type="number" id="txAmount" class="form-control border-start-0 ps-0" placeholder="0.00">
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label small text-muted fw-bold">Category</label>
+                        <input type="text" id="txCategory" class="form-control" placeholder="e.g. Salary, Utilities, Food">
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label small text-muted fw-bold">Notes</label>
+                        <textarea id="txNotes" class="form-control" rows="2" placeholder="Optional description..."></textarea>
+                    </div>
+                    <button class="btn btn-primary btn-custom w-100" onclick="addTransaction()">
+                        <i class="fa-solid fa-check me-2"></i>Save Transaction
+                    </button>
+                </div>
+            </div>
+
+            <!-- Transactions Table -->
+            <div class="col-lg-8">
+                <div class="card card-custom p-4 h-100">
+                    <div class="d-flex justify-content-between align-items-center mb-4">
+                        <h5 class="fw-bold mb-0"><i class="fa-solid fa-list-ul text-primary me-2"></i>Recent History</h5>
+                        <button class="btn btn-light btn-sm fw-bold border text-muted" onclick="loadDashboard()"><i class="fa-solid fa-rotate-right me-1"></i>Refresh</button>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table table-custom table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Category</th>
+                                    <th>Notes</th>
+                                    <th class="text-end">Amount</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="txTableBody">
+                                <!-- JS Populated -->
+                            </tbody>
+                        </table>
+                        <div id="emptyState" class="text-center py-5 hidden">
+                            <i class="fa-solid fa-receipt text-muted opacity-25" style="font-size: 3rem;"></i>
+                            <p class="text-muted mt-3 fw-medium">No transactions found</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bootstrap JS for Toasts -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+<script>
+    const API_URL = "http://127.0.0.1:8000/api/v1";
+    let token = localStorage.getItem("token");
+    let currentUser = localStorage.getItem("username");
+
+    // UI Helper: Toasts
+    function showToast(msg, type="danger") {
+        const icon = type === 'success' ? 'fa-check-circle' : 'fa-triangle-exclamation';
+        const toastHTML = `
+            <div class="toast align-items-center text-bg-${type} border-0 show" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body fw-medium">
+                        <i class="fa-solid ${icon} me-2"></i>${msg}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>`;
+        const container = document.getElementById("toastContainer");
+        container.insertAdjacentHTML('beforeend', toastHTML);
+        setTimeout(() => {
+            if(container.firstChild) container.removeChild(container.firstChild);
+        }, 4000);
+    }
+
+    function checkAuth() {
+        if (token) {
+            document.getElementById("authSection").classList.add("hidden");
+            document.getElementById("dashboardSection").classList.remove("hidden");
+            document.getElementById("navAuthMenu").classList.remove("hidden");
+            document.getElementById("navUserDisplay").textContent = `Hi, ${currentUser}`;
+            loadDashboard();
+        } else {
+            document.getElementById("authSection").classList.remove("hidden");
+            document.getElementById("dashboardSection").classList.add("hidden");
+            document.getElementById("navAuthMenu").classList.add("hidden");
+        }
+    }
+
+    // Auth Calls
+    async function register() {
+        const un = document.getElementById("username").value;
+        const pw = document.getElementById("password").value;
+        const rl = document.getElementById("role").value;
+        
+        if(!un || !pw) return showToast("Username and Password Required", "danger");
+
+        try {
+            const res = await fetch(`${API_URL}/auth/register`, {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({username: un, password: pw, role: rl})
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast("Account created! Logging in...", "success");
+                login();
+            } else showToast(data.detail || "Registration failed", "danger");
+        } catch(e) { showToast("Connection error", "danger"); }
+    }
+
+    async function login() {
+        const un = document.getElementById("username").value;
+        const pw = document.getElementById("password").value;
+        
+        if(!un || !pw) return showToast("Username and Password Required", "danger");
+
+        const params = new URLSearchParams();
+        params.append("username", un);
+        params.append("password", pw);
+
+        try {
+            const res = await fetch(`${API_URL}/auth/login`, {
+                method: "POST",
+                headers: {"Content-Type": "application/x-www-form-urlencoded"},
+                body: params
+            });
+            const data = await res.json();
+            if (res.ok) {
+                token = data.access_token;
+                currentUser = un;
+                localStorage.setItem("token", token);
+                localStorage.setItem("username", un);
+                checkAuth();
+            } else showToast(data.detail || "Invalid credentials", "danger");
+        } catch(e) { showToast("Connection error", "danger"); }
+    }
+
+    function logout() {
+        token = null; currentUser = null;
+        localStorage.removeItem("token");
+        localStorage.removeItem("username");
+        document.getElementById("username").value = "";
+        document.getElementById("password").value = "";
+        checkAuth();
+    }
+
+    // Dashboard Data
+    async function loadDashboard() {
+        if(!token) return;
+        
+        // 1. Get Summary
+        const sumRes = await fetch(`${API_URL}/transactions/summary`, {
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+        if(sumRes.ok) {
+            const summary = await sumRes.json();
+            document.getElementById("totIncome").textContent = `$${summary.total_income.toFixed(2)}`;
+            document.getElementById("totExpense").textContent = `$${summary.total_expense.toFixed(2)}`;
+            document.getElementById("curBalance").textContent = `$${summary.current_balance.toFixed(2)}`;
+        }
+
+        // 2. Get Transactions
+        const txRes = await fetch(`${API_URL}/transactions/?limit=50`, {
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+        if(txRes.ok) {
+            const txs = await txRes.json();
+            const tbody = document.getElementById("txTableBody");
+            const emptyState = document.getElementById("emptyState");
+            tbody.innerHTML = "";
+            
+            if (txs.length === 0) {
+                emptyState.classList.remove("hidden");
+            } else {
+                emptyState.classList.add("hidden");
+                txs.forEach(tx => {
+                    const tr = document.createElement("tr");
+                    const isIncome = tx.type === "income";
+                    const badgeClass = isIncome ? "badge-income" : "badge-expense";
+                    const amountColor = isIncome ? "text-success" : "text-danger";
+                    const amountPrefix = isIncome ? "+" : "-";
+                    const icon = isIncome ? "fa-arrow-down" : "fa-arrow-up";
+
+                    tr.innerHTML = `
+                        <td><span class="${badgeClass}"><i class="fa-solid ${icon} me-1"></i>${tx.type}</span></td>
+                        <td class="fw-medium">${tx.category}</td>
+                        <td class="text-muted small">${tx.notes || "-"}</td>
+                        <td class="fw-bold ${amountColor} text-end">${amountPrefix}$${tx.amount.toFixed(2)}</td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-light text-danger rounded-circle border" onclick="deleteTx(${tx.id})" title="Delete">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            }
+        }
+    }
+
+    // Actions
+    async function addTransaction() {
+        const type = document.getElementById("txType").value;
+        const amount = parseFloat(document.getElementById("txAmount").value);
+        const category = document.getElementById("txCategory").value.trim();
+        const notes = document.getElementById("txNotes").value.trim();
+
+        if(!amount || amount <= 0 || !category) {
+            return showToast("Valid positive amount and category are required.", "danger");
+        }
+
+        const res = await fetch(`${API_URL}/transactions/`, {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${token}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({type, amount, category, notes})
+        });
+
+        if(res.ok) {
+            showToast("Transaction saved successfully", "success");
+            document.getElementById("txAmount").value = "";
+            document.getElementById("txCategory").value = "";
+            document.getElementById("txNotes").value = "";
+            loadDashboard();
+        } else {
+            const data = await res.json();
+            showToast(data.detail || "Error adding transation. Role might be restricted.", "danger");
+        }
+    }
+
+    async function deleteTx(id) {
+        const res = await fetch(`${API_URL}/transactions/${id}`, {
+            method: "DELETE",
+            headers: {"Authorization": `Bearer ${token}`}
+        });
+        if(res.ok) {
+            showToast("Transaction deleted", "success");
+            loadDashboard();
+        } else {
+            showToast("Failed. Only Admins can delete.", "danger");
+        }
+    }
+
+    // Init
+    checkAuth();
+</script>
+
+</body>
+</html>
